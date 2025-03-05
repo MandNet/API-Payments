@@ -10,7 +10,7 @@ namespace API_Payments.Autentication.Services
 {
     public class AutenticationService : IAutentication
     {
-        private readonly ApiSettingsDTO? _apiSet;
+        private readonly ApiSettings? _apiSet;
         private readonly jwtToken _jwt;
         private readonly List<Security> _security;
         private readonly int tempoExpiracao = 3600;

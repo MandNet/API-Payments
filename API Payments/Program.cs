@@ -79,7 +79,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 }, ServiceLifetime.Transient, ServiceLifetime.Transient);
 
 builder.Services.Configure<jwtToken>(builder.Configuration.GetSection("jwtToken"));
-builder.Services.Configure<ApiSettingsDTO>(builder.Configuration.GetSection("ApiSettings"));
+builder.Services.Configure<ApiSettings>(builder.Configuration.GetSection("ApiSettings"));
 builder.Services.Configure<List<Security>>(builder.Configuration.GetSection("Security"));
 builder.Services.Configure<List<Fraud>>(builder.Configuration.GetSection("Fraud"));
 

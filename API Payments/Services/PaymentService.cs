@@ -15,7 +15,7 @@ namespace API_Payments.Services
         private readonly IRequestInterface _requestService;
         private readonly ITransactionInterface _transactionService;
         private readonly IFeeInterface _feeService;
-        private readonly ApiSettingsDTO _mySettings;
+        private readonly ApiSettings _mySettings;
 
 
         public PaymentService(AppDbContext context, 
@@ -23,7 +23,7 @@ namespace API_Payments.Services
                                 IRequestInterface requestService,
                                 ITransactionInterface transactionService,
                                 IFeeInterface feeService,
-                                IOptions<ApiSettingsDTO> mySettings
+                                IOptions<ApiSettings> mySettings
             )
         {
             _context = context;

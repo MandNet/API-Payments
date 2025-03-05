@@ -11,10 +11,10 @@ namespace API_Payments.Services
     {
         private Timer _timer;
         private readonly IServiceProvider _serviceProvider;
-        private readonly ApiSettingsDTO _mySettings;
+        private readonly ApiSettings _mySettings;
 
 
-        public FeeUpdateService(IServiceProvider serviceProvider, ApiSettingsDTO mySettings)
+        public FeeUpdateService(IServiceProvider serviceProvider, ApiSettings mySettings)
         {
             _serviceProvider = serviceProvider;
             _mySettings = mySettings;

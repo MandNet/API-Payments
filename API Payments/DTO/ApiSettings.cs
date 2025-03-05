@@ -2,7 +2,7 @@
 
 namespace API_Payments.DTO
 {
-    public class ApiSettingsDTO
+    public class ApiSettings
     {
         public string? Ambiente { get; set; }
         public string? BaseUrl { get; set; }
@@ -45,7 +45,7 @@ namespace API_Payments.DTO
     {
         public Logging? Logging { get; set; }
         public string? AllowedHosts { get; set; }
-        public ApiSettingsDTO? ApiSettings { get; set; }
+        public ApiSettings? ApiSettings { get; set; }
         public ConnectionStrings? ConnectionStrings { get; set; }
         public jwtToken? jwt { get; set; }
         public List<Security>? Security { get; set; }
