@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using API_Payments.DTO;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace API_Payments.Services
 {
@@ -12,12 +13,15 @@ namespace API_Payments.Services
         private Timer _timer;
         private readonly IServiceProvider _serviceProvider;
         private readonly ApiSettings _mySettings;
+        private readonly IFeeInterface _feeService;
 
-
-        public FeeUpdateService(IServiceProvider serviceProvider, ApiSettings mySettings)
+        public FeeUpdateService(IServiceProvider serviceProvider,
+                                IOptions<ApiSettings> mySettings,
+                                IFeeInterface feeService)
         {
             _serviceProvider = serviceProvider;
-            _mySettings = mySettings;
+            _mySettings = mySettings.Value;
+            _feeService = feeService;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -28,11 +32,7 @@ namespace API_Payments.Services
 
         private void UpdateFee(object state)
         {
-            using (var scope = _serviceProvider.CreateScope())
-            {
-                var feeService = scope.ServiceProvider.GetRequiredService<FeeService>();
-                feeService.Generate().Wait();
-            }
+            _feeService.Generate().Wait();
         }
 
         public Task StopAsync(CancellationToken cancellationToken)

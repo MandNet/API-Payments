@@ -38,6 +38,12 @@ namespace API_Payments.Services
                     fee.Date = DateTime.Now;
                     fee.Value = num;
                 }
+
+                if (fee.Value < (decimal)0.10) 
+                {
+                    fee.Value += 1;
+                }
+
                 resp = Insert(fee).Result;
                 if (resp.Success)
                 {

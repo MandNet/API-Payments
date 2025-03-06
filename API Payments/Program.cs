@@ -65,14 +65,14 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 });
 
 builder.Services.AddScoped<ICardInterface, CardService>();
-builder.Services.AddScoped<IFeeInterface, FeeService>();
+builder.Services.AddSingleton<IFeeInterface, FeeService>();
 builder.Services.AddScoped<ILogInterface, LogService>();
 builder.Services.AddScoped<IRequestInterface, RequestService>();
 builder.Services.AddScoped<ITransactionInterface, TransactionService>();
 builder.Services.AddScoped<IPaymentInterface, PaymentService>();
 builder.Services.AddScoped<IAutentication, AutenticationService>();
 
-//builder.Services.AddHostedService<FeeUpdateService>();
+builder.Services.AddHostedService<FeeUpdateService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
