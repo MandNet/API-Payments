@@ -138,14 +138,17 @@ namespace API_Payments.Services
                     {
                         request.Status = (int)RequestStatusEnum.Rejected;
                         request.Motive = transaction.Message;
+                        resp.Data = null;
+                        resp.Success = false;
+                        resp.Message = "Error: " + transaction.Message;
                         await _requestService.Update(request);
                     }
                     else
                     {
                         request.Status = (int)RequestStatusEnum.Aproved;
-                        await _requestService.Update(request);
+                        var req = _requestService.Update(request).Result.Data;
                         await _transactionService.Insert(transaction.Data);
-                        await _cardService.Debt(request.Card, transaction.Data.Total);
+                        await _cardService.Debt(req.Card, transaction.Data.Total);
                         resp.Data.Add(transaction.Data);
                     }
                 }
@@ -230,7 +233,10 @@ namespace API_Payments.Services
 
                 var req = _requestService.Insert(request).Result;
 
-                request = req.Data;
+                if (req.Data != null)
+                {
+                    request = req.Data;
+                }
 
                 var requests = await Process(request);
                 if (!requests.Success)

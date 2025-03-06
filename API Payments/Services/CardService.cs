@@ -147,9 +147,15 @@ namespace API_Payments.Services
                     return resp;
                 }
 
-                if (!string.IsNullOrEmpty(card.Number))
+                try
                 {
-                    card.Number = EncryptionUtility.DecryptNew(card.Number);
+                    if (!string.IsNullOrEmpty(card.Number))
+                    {
+                        card.Number = EncryptionUtility.DecryptNew(card.Number);
+                    }
+                }
+                catch (Exception)
+                {
                 }
                 resp.Data = card;
                 resp.Success = true;
@@ -282,6 +288,8 @@ namespace API_Payments.Services
         public async Task<ResponseDTO<CardModel>> Update(CardModel card)
         {
             ResponseDTO<CardModel> resp = new ResponseDTO<CardModel>();
+            CardModel cardObj = new CardModel();
+            string ncard;
             try
             {
                 resp = ValidateCard(card);
@@ -289,6 +297,8 @@ namespace API_Payments.Services
                 {
                     return resp;
                 }
+                cardObj = resp.Data;
+                ncard = cardObj.Number;
 
                 var old_card = GetById(card.Id).Result;
                 if (!old_card.Success)
@@ -299,14 +309,14 @@ namespace API_Payments.Services
                     return resp;
                 }
 
-                card = resp.Data;
                 _context.ChangeTracker.Clear();
-                _context.Update(card);
+                cardObj.Number = ncard;
+                _context.Update(cardObj);
                 await _context.SaveChangesAsync();
 
-                card.Number = EncryptionUtility.DecryptNew(card.Number);
+                cardObj.Number = EncryptionUtility.DecryptNew(cardObj.Number);
 
-                resp.Data = card;
+                resp.Data = cardObj;
                 resp.Message = "Card successfully updated";
                 resp.Success = true;
 
