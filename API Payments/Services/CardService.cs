@@ -213,6 +213,15 @@ namespace API_Payments.Services
             ResponseDTO<CardModel> resp = new ResponseDTO<CardModel>();
             try
             {
+                var cardBd = await GetByNumber(card.Number);
+                if (cardBd.Success)
+                {
+                    resp.Data = null;
+                    resp.Message = "Card already exists";
+                    resp.Success = false;
+                    return resp;
+                }
+
                 resp = ValidateCard(card);
                 if (!resp.Success)
                 {
@@ -292,6 +301,15 @@ namespace API_Payments.Services
             string ncard;
             try
             {
+                var cardBd = await GetByNumber(card.Number);
+                if ((cardBd.Success) && (cardBd.Data.Id != card.Id))
+                {
+                    resp.Data = null;
+                    resp.Message = "Card already exists";
+                    resp.Success = false;
+                    return resp;
+                }
+
                 resp = ValidateCard(card);
                 if (!resp.Success)
                 {
