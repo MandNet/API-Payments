@@ -169,6 +169,7 @@ namespace API_Payments.Services
             try
             {
                 number = Utilities.Utilities.OnlyNumbers(number);
+                number = EncryptionUtility.EncryptNew(number);
                 var card = await _context.TCards.FirstOrDefaultAsync(scard => scard.Number == number);
                 if (card == null)
                 {
@@ -178,9 +179,15 @@ namespace API_Payments.Services
                     return resp;
                 }
 
-                if (!string.IsNullOrEmpty(card.Number))
+                try
                 {
-                    card.Number = EncryptionUtility.DecryptNew(card.Number);
+                    if (!string.IsNullOrEmpty(card.Number))
+                    {
+                        card.Number = EncryptionUtility.DecryptNew(card.Number);
+                    }
+                }
+                catch (Exception)
+                {
                 }
 
                 resp.Data = card;

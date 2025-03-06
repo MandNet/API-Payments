@@ -179,7 +179,7 @@ namespace API_Payments.Services
                 {
                     request.Status = (int)RequestStatusEnum.BeingProcessed;
                     request.ProcessorCode = processor;
-                    _context.Update(request);
+                    await Update(request);
                     resp.Data.Add(request);
                 }
                 await _context.SaveChangesAsync();
@@ -203,7 +203,7 @@ namespace API_Payments.Services
                 string processor = Guid.NewGuid().ToString();
                 request.Status = (int)RequestStatusEnum.BeingProcessed;
                 request.ProcessorCode = processor;
-                _context.Update(request);
+                await Update(request);
                 resp.Data.Add(request);
                 await _context.SaveChangesAsync();
                 resp.Success = true;

@@ -93,7 +93,7 @@ namespace API_Payments.Services
                 }
 
                 var transaction = await _transactionService.GetLast(request.Card);
-                if (request.Value == transaction.Data.Value)
+                if (transaction.Success && request.Value == transaction.Data.Value)
                 {
                     var interval = DateTime.Now - transaction.Data.Date;
                     if (interval.TotalSeconds < (int)_mySettings.fraud.Interval)
