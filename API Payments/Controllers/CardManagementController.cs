@@ -21,18 +21,8 @@ namespace API_Payments.Controllers
 
         [Authorize]
         [MapToApiVersion(1)]
-        [HttpGet("Listar/{num}")]
-        public async Task<ActionResult<ResponseDTO<List<CardModel>>>> List(int num = 0)
-        {
-            var cards = await _cardInterface.List(num);
-            return Ok(cards);
-        }
-
-
-        [Authorize]
-        [MapToApiVersion(1)]
-        [HttpGet("Listar")]
-        public async Task<ActionResult<ResponseDTO<List<CardModel>>>> List()
+        [HttpGet()]
+        public async Task<ActionResult<ResponseDTO<List<CardModel>>>> Get()
         {
             var cards = await _cardInterface.List(0);
             return Ok(cards);
@@ -40,26 +30,17 @@ namespace API_Payments.Controllers
 
         [Authorize]
         [MapToApiVersion(1)]
-        [HttpGet("GetById/{id}")]
-        public async Task<ActionResult<ResponseDTO<CardModel>>> GetById([FromRoute] int Id)
+        [HttpGet("{id}")]
+        public async Task<ActionResult<ResponseDTO<CardModel>>> Get([FromRoute] int id)
         {
-            var card = await _cardInterface.GetById(Id);
+            var card = await _cardInterface.GetById(id);
             return Ok(card);
         }
 
         [Authorize]
         [MapToApiVersion(1)]
-        [HttpGet("GetByCard/{number}")]
-        public async Task<ActionResult<ResponseDTO<CardModel>>> GetByCard([FromRoute] string number)
-        {
-            var card = await _cardInterface.GetByNumber(number);
-            return Ok(card);
-        }
-
-        [Authorize]
-        [MapToApiVersion(1)]
-        [HttpPost("Insert")]
-        public async Task<ActionResult<ResponseDTO<CardModel>>> Insert([FromBody] CardModel card)
+        [HttpPost()]
+        public async Task<ActionResult<ResponseDTO<CardModel>>> Post([FromBody] CardModel card)
         {
             var cardbd = await _cardInterface.Insert(card);
             return Ok(cardbd);
@@ -67,8 +48,8 @@ namespace API_Payments.Controllers
 
         [Authorize]
         [MapToApiVersion(1)]
-        [HttpPut("Update")]
-        public async Task<ActionResult<ResponseDTO<CardModel>>> Update([FromBody] CardModel card)
+        [HttpPut()]
+        public async Task<ActionResult<ResponseDTO<CardModel>>> Put([FromBody] CardModel card)
         {
             var cardbd = await _cardInterface.Update(card);
             return Ok(cardbd);
@@ -76,7 +57,7 @@ namespace API_Payments.Controllers
 
         [Authorize]
         [MapToApiVersion(1)]
-        [HttpDelete("Delete")]
+        [HttpDelete()]
         public async Task<ActionResult<ResponseDTO<CardModel>>> Delete([FromBody] CardModel card)
         {
             var cardbd = await _cardInterface.Delete(card);

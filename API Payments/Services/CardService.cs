@@ -24,11 +24,11 @@ namespace API_Payments.Services
             try
             {
                 var card = GetByNumber(cardNumber).Result;
-                if (!card.Status)
+                if (!card.Success)
                 {
                     resp.Data = null;
                     resp.Message = "Card not found";
-                    resp.Status = false;
+                    resp.Success = false;
                     return resp;
                 }
 
@@ -38,7 +38,7 @@ namespace API_Payments.Services
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
         }
@@ -48,18 +48,18 @@ namespace API_Payments.Services
             try
             {
                 var card = GetById(cardId).Result;
-                if (!card.Status)
+                if (!card.Success)
                 {
                     resp.Data = null;
                     resp.Message = "Card not found";
-                    resp.Status = false;
+                    resp.Success = false;
                     return resp;
                 }
                 if ((card.Data.Balance+card.Data.Limit) < value)
                 {
                     resp.Data = null;
                     resp.Message = "Insufficient balance";
-                    resp.Status = false;
+                    resp.Success = false;
                     return resp;
                 }
                 if (card.Data.Balance >= value)
@@ -78,7 +78,7 @@ namespace API_Payments.Services
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
         }
@@ -93,13 +93,13 @@ namespace API_Payments.Services
                 await _context.SaveChangesAsync();
                 resp.Data = card;
                 resp.Message = "Card successfully deleted";
-                resp.Status = true;
+                resp.Success = true;
             }
             catch (Exception ex)
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
         }
@@ -111,24 +111,24 @@ namespace API_Payments.Services
             {
 
                 var card = GetByNumber(number);
-                if (!card.Result.Status)
+                if (!card.Result.Success)
                 {
                     resp.Data = null;
                     resp.Message = "Card not found";
-                    resp.Status = false;
+                    resp.Success = false;
                     return resp;
                 }
                 resp.Data = new CardBalanceDTO();
                 resp.Data.Balance = card.Result.Data.Balance;
                 resp.Data.Limit = card.Result.Data.Limit;
                 resp.Data.Total = card.Result.Data.Balance + card.Result.Data.Limit;
-                resp.Status = true;
+                resp.Success = true;
             }
             catch (Exception ex)
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
         }
@@ -143,19 +143,22 @@ namespace API_Payments.Services
                 {
                     resp.Data = null;
                     resp.Message = "No card found";
-                    resp.Status = false;
+                    resp.Success = false;
                     return resp;
                 }
 
-                card.Number = EncryptionUtility.DecryptNew(card.Number);
+                if (!string.IsNullOrEmpty(card.Number))
+                {
+                    card.Number = EncryptionUtility.DecryptNew(card.Number);
+                }
                 resp.Data = card;
-                resp.Status = true;
+                resp.Success = true;
             }
             catch (Exception ex)
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
         }
@@ -166,29 +169,30 @@ namespace API_Payments.Services
             try
             {
                 number = Utilities.Utilities.OnlyNumbers(number);
-                number = EncryptionUtility.EncryptNew(number);
                 var card = await _context.TCards.FirstOrDefaultAsync(scard => scard.Number == number);
                 if (card == null)
                 {
                     resp.Data = null;
                     resp.Message = "No card found";
-                    resp.Status = false;
+                    resp.Success = false;
                     return resp;
                 }
 
-                card.Number = EncryptionUtility.DecryptNew(card.Number);
+                if (!string.IsNullOrEmpty(card.Number))
+                {
+                    card.Number = EncryptionUtility.DecryptNew(card.Number);
+                }
 
                 resp.Data = card;
-                resp.Status = true;
+                resp.Success = true;
             }
             catch (Exception ex)
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
-
         }
 
         public async Task<ResponseDTO<CardModel>> Insert(CardModel card)
@@ -197,33 +201,32 @@ namespace API_Payments.Services
             try
             {
                 resp = ValidateCard(card);
-                if (!resp.Status)
+                if (!resp.Success)
                 {
                     return resp;
                 }
 
-                card = resp.Data;
+                card = resp.Data!;
                 Random randNum = new Random();
-                
-                card.Balance = randNum.Next(100); 
+
+                card.Balance = randNum.Next(100);
                 card.Limit = randNum.Next(100);
 
                 _context.ChangeTracker.Clear();
                 await _context.AddAsync(card);
                 var ret = await _context.SaveChangesAsync();
 
-                card.Id = ret;
                 card.Number = EncryptionUtility.DecryptNew(card.Number);
 
                 resp.Data = card;
                 resp.Message = "Card successfully inserted";
-                resp.Status = true;
+                resp.Success = true;
             }
             catch (Exception ex)
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
         }
@@ -253,7 +256,7 @@ namespace API_Payments.Services
                     cards[i].Number = EncryptionUtility.DecryptNew(cards[i].Number);
                 }
 
-                resp.Status = true;
+                resp.Success = true;
                 resp.Data = cards;
                 if (num > 0)
                     resp.Message = "List of the last " + num.ToString() + " cards retrieved successfully (" + cards.Count.ToString() + ")";
@@ -264,7 +267,7 @@ namespace API_Payments.Services
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
         }
@@ -275,17 +278,17 @@ namespace API_Payments.Services
             try
             {
                 resp = ValidateCard(card);
-                if (!resp.Status)
+                if (!resp.Success)
                 {
                     return resp;
                 }
 
                 var old_card = GetById(card.Id).Result;
-                if (!old_card.Status)
+                if (!old_card.Success)
                 {
                     resp.Data = null;
                     resp.Message = "Card not found";
-                    resp.Status = false;
+                    resp.Success = false;
                     return resp;
                 }
 
@@ -293,9 +296,12 @@ namespace API_Payments.Services
                 _context.ChangeTracker.Clear();
                 _context.Update(card);
                 await _context.SaveChangesAsync();
+
+                card.Number = EncryptionUtility.DecryptNew(card.Number);
+
                 resp.Data = card;
                 resp.Message = "Card successfully updated";
-                resp.Status = true;
+                resp.Success = true;
 
                 LogModel log = new LogModel();
                 log.After = Utilities.JsonUtility.Serialize(card);
@@ -307,7 +313,7 @@ namespace API_Payments.Services
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
         }
@@ -318,23 +324,23 @@ namespace API_Payments.Services
             try
             {
                 var card = await GetByNumber(number);
-                if (!card.Status)
+                if (!card.Success)
                 {
                     resp.Data = null;
                     resp.Message = "Card not found";
-                    resp.Status = false;
+                    resp.Success = false;
                     return resp;
                 }
                 card.Data.Balance = value;
                 await Update(card.Data);
                 resp.Data = card.Data;
-                resp.Status = true;
+                resp.Success = true;
             }
             catch (Exception ex)
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
         }
@@ -345,23 +351,23 @@ namespace API_Payments.Services
             try
             {
                 var card = await GetByNumber(number);
-                if (!card.Status)
+                if (!card.Success)
                 {
                     resp.Data = null;
                     resp.Message = "Card not found";
-                    resp.Status = false;
+                    resp.Success = false;
                     return resp;
                 }
                 card.Data.Limit = value;
                 await Update(card.Data);
                 resp.Data = card.Data;
-                resp.Status = true;
+                resp.Success = true;
             }
             catch (Exception ex)
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
         }
@@ -372,23 +378,23 @@ namespace API_Payments.Services
             try
             {
                 var card = await GetByNumber(number);
-                if (!card.Status)
+                if (!card.Success)
                 {
                     resp.Data = null;
                     resp.Message = "Card not found";
-                    resp.Status = false;
+                    resp.Success = false;
                     return resp;
                 }
                 card.Data.Status = status;
                 await Update(card.Data);
                 resp.Data = card.Data;
-                resp.Status = true;
+                resp.Success = true;
             }
             catch (Exception ex)
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
         }
@@ -399,26 +405,27 @@ namespace API_Payments.Services
             try
             {
                 card.Number = Utilities.Utilities.OnlyNumbers(card.Number);
-                card.Number = EncryptionUtility.EncryptNew(card.Number);
 
                 if (card.Number.Length != 15)
                 {
                     resp.Data = null;
                     resp.Message = "Card number must have 15 digits";
-                    resp.Status = false;
+                    resp.Success = false;
                     return resp;
                 }
+
+                card.Number = EncryptionUtility.EncryptNew(card.Number);
             }
             catch (Exception ex)
             {
                 resp.Data = null;
                 resp.Message = "Error validating card: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
                 return resp;
             }
 
             resp.Data = card;
-            resp.Status = true;
+            resp.Success = true;
             return resp;
         }
     }

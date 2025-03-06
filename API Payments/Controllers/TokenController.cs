@@ -41,7 +41,7 @@ namespace API_Payments.Controllers
                 }
                 else
                 {
-                    if (param != null)
+                    if (param != null && param.Id != null)
                         id = param.Id;
                 }
                 if (headers.ContainsKey("x-token"))
@@ -50,7 +50,7 @@ namespace API_Payments.Controllers
                 }
                 else
                 {
-                    if (param != null)
+                    if (param != null && param.token != null)
                         senha = param.token;
                 }
 
@@ -62,13 +62,13 @@ namespace API_Payments.Controllers
                 else
                 {
                     token.Message = "User not authorized";
-                    token.Status = false;
+                    token.Success = false;
                 }
             }
             catch (Exception ex)
             {
                 token.Message = ex.Message;
-                token.Status = false;
+                token.Success = false;
             }
 
             return Ok(token);

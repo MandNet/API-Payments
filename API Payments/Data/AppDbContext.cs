@@ -14,7 +14,7 @@ namespace API_Payments.Data
         public DbSet<FeeModel> TFees { get; set; }
         public DbSet<RequestModel> TRequests { get; set; }
         public DbSet<TransactionModel> TTransactions { get; set; }
-        public DbSet<LogModel> TLogs { get; set; }
+        public DbSet<LogModel> TLog { get; set; }
     }
 }
 

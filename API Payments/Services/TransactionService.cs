@@ -32,13 +32,13 @@ namespace API_Payments.Services
                 }
 
                 resp.Data = transaction;
-                resp.Status = true;
+                resp.Success = true;
             }
             catch (Exception ex)
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
 
@@ -51,23 +51,23 @@ namespace API_Payments.Services
             {
                 ResponseDTO<List<TransactionModel>> lresp = new ResponseDTO<List<TransactionModel>>();
                 lresp = ListByCard(cardNumber).Result;
-                if (lresp.Status)
+                if (lresp.Success)
                 {
                     resp.Data = lresp.Data[0];
-                    resp.Status = true;
+                    resp.Success = true;
                 }
                 else
                 {
                     resp.Data = null;
                     resp.Message = "Transaction not found";
-                    resp.Status = false;
+                    resp.Success = false;
                 }
             }
             catch (Exception ex)
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
 
@@ -82,17 +82,15 @@ namespace API_Payments.Services
                 await _context.AddAsync(transaction);
                 var ret = await _context.SaveChangesAsync();
 
-                transaction.Id = ret;
-
                 resp.Data = transaction;
                 resp.Message = "Transaction successfully inserted";
-                resp.Status = true;
+                resp.Success = true;
             }
             catch (Exception ex)
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
         }
@@ -117,7 +115,7 @@ namespace API_Payments.Services
                                                                      .ToList();
                 }
 
-                resp.Status = true;
+                resp.Success = true;
                 resp.Data = transactions;
                 if (num > 0)
                     resp.Message = "List of the last " + num.ToString() + " transactions retrieved successfully (" + transactions.Count.ToString() + ")";
@@ -128,7 +126,7 @@ namespace API_Payments.Services
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
 
@@ -141,7 +139,7 @@ namespace API_Payments.Services
             {
                 int cardId = 0;
                 var card = _cardService.GetByNumber(cardNumber).Result;
-                if (card != null) 
+                if (card.Data != null) 
                 {
                     cardId = card.Data.Id;
                 }
@@ -151,7 +149,7 @@ namespace API_Payments.Services
                                                                     .Where(transactionbd => transactionbd.Card_Id == cardId)
                                                                     .ToList();
 
-                resp.Status = true;
+                resp.Success = true;
                 resp.Data = transactions;
                 resp.Message = "List of transactions of card " + cardId.ToString() + "(" + transactions.Count.ToString() + ")";
             }
@@ -159,7 +157,7 @@ namespace API_Payments.Services
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
         }

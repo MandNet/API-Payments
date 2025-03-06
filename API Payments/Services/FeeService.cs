@@ -21,10 +21,10 @@ namespace API_Payments.Services
             {
                 Random randNum = new Random();
 
-                decimal num = randNum.Next(200)/100;
+                decimal num = randNum.Next(200)/(decimal)100;
 
                 resp = GetLast().Result;
-                if (resp.Status)
+                if (resp.Success)
                 {
                     fee = resp.Data;
                     fee.Id = 0;
@@ -39,22 +39,22 @@ namespace API_Payments.Services
                     fee.Value = num;
                 }
                 resp = Insert(fee).Result;
-                if (resp.Status)
+                if (resp.Success)
                 {
                      resp.Message = "Fee generated successfully";
-                     resp.Status = true;
+                     resp.Success = true;
                 }
                 else
                 {
                     resp.Message = "Error generating fee";
-                    resp.Status = false;
+                    resp.Success = false;
                 }
             }
             catch (Exception ex)
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
         }
@@ -73,13 +73,13 @@ namespace API_Payments.Services
                 }
 
                 resp.Data = fee;
-                resp.Status = true;
+                resp.Success = true;
             }
             catch (Exception ex)
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
         }
@@ -91,23 +91,23 @@ namespace API_Payments.Services
             {
                 ResponseDTO<List<FeeModel>> lresp = new ResponseDTO<List<FeeModel>>();
                 lresp = List(1).Result;
-                if (lresp.Status)
+                if (lresp.Success)
                 {
                     resp.Data = lresp.Data[0];
-                    resp.Status = true;
+                    resp.Success = true;
                 }
                 else
                 {
                     resp.Data = null;
                     resp.Message = "Fee not found";
-                    resp.Status = false;
+                    resp.Success = false;
                 }
             }
             catch (Exception ex)
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
         }
@@ -121,17 +121,15 @@ namespace API_Payments.Services
                 await _context.AddAsync(fee);
                 var ret = await _context.SaveChangesAsync();
 
-                fee.Id = ret;
-
                 resp.Data = fee;
                 resp.Message = "Fee successfully inserted";
-                resp.Status = true;
+                resp.Success = true;
             }
             catch (Exception ex)
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
         }
@@ -156,7 +154,7 @@ namespace API_Payments.Services
                                                                      .ToList();
                 }
 
-                resp.Status = true;
+                resp.Success = true;
                 resp.Data = fees;
                 if (num > 0)
                     resp.Message = "List of the last " + num.ToString() + " fees retrieved successfully (" + fees.Count.ToString() + ")";
@@ -167,7 +165,7 @@ namespace API_Payments.Services
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
         }

@@ -2,6 +2,7 @@
 using API_Payments.DTO;
 using API_Payments.Enum;
 using API_Payments.Models;
+using API_Payments.Utilities;
 using Microsoft.EntityFrameworkCore;
 
 namespace API_Payments.Services
@@ -27,14 +28,15 @@ namespace API_Payments.Services
                     return resp;
                 }
 
+                request.Card = EncryptionUtility.DecryptNew(request.Card);
                 resp.Data = request;
-                resp.Status = true;
+                resp.Success = true;
             }
             catch (Exception ex)
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
         }
@@ -44,21 +46,24 @@ namespace API_Payments.Services
             ResponseDTO<RequestModel> resp = new ResponseDTO<RequestModel>();
             try
             {
+                request.Card = Utilities.Utilities.OnlyNumbers(request.Card);
+                request.Card = EncryptionUtility.EncryptNew(request.Card);
+
                 _context.ChangeTracker.Clear();
                 await _context.AddAsync(request);
                 var ret = await _context.SaveChangesAsync();
 
-                request.Id = ret;
+                request.Card = EncryptionUtility.DecryptNew(request.Card);
 
                 resp.Data = request;
                 resp.Message = "Request successfully inserted";
-                resp.Status = true;
+                resp.Success = true;
             }
             catch (Exception ex)
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
         }
@@ -83,7 +88,12 @@ namespace API_Payments.Services
                                                                      .ToList();
                 }
 
-                resp.Status = true;
+                for (int i = 0; i < requests.Count; i++)
+                {
+                    requests[i].Card = EncryptionUtility.DecryptNew(requests[i].Card);
+                }
+
+                resp.Success = true;
                 resp.Data = requests;
                 if (num > 0)
                     resp.Message = "List of the last " + num.ToString() + " requests retrieved successfully (" + requests.Count.ToString() + ")";
@@ -94,7 +104,7 @@ namespace API_Payments.Services
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
         }
@@ -110,7 +120,12 @@ namespace API_Payments.Services
                                                                     .Where(requestbd => requestbd.ProcessorCode == Processor)
                                                                     .ToList();
 
-                resp.Status = true;
+                for (int i = 0; i < requests.Count; i++)
+                {
+                    requests[i].Card = EncryptionUtility.DecryptNew(requests[i].Card);
+                }
+
+                resp.Success = true;
                 resp.Data = requests;
                 resp.Message = "List of requsts with processor code " + Processor + "(" + requests.Count.ToString() + ")";
             }
@@ -118,7 +133,7 @@ namespace API_Payments.Services
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
         }
@@ -133,7 +148,12 @@ namespace API_Payments.Services
                                                                     .Where(requestbd => requestbd.Status == status)
                                                                     .ToList();
 
-                resp.Status = true;
+                for (int i = 0; i < requests.Count; i++)
+                {
+                    requests[i].Card = EncryptionUtility.DecryptNew(requests[i].Card);
+                }
+
+                resp.Success = true;
                 resp.Data = requests;
                 resp.Message = "List of requsts with processor status " + RequestStatusEnumDescription.GetDescription(status) + "(" + requests.Count.ToString() + ")";
             }
@@ -141,7 +161,7 @@ namespace API_Payments.Services
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
         }
@@ -163,14 +183,37 @@ namespace API_Payments.Services
                     resp.Data.Add(request);
                 }
                 await _context.SaveChangesAsync();
-                resp.Status = true;
+                resp.Success = true;
                 resp.Message = "List of requests marked to be processed (" + requests.Count.ToString() + ")";
             }
             catch (Exception ex)
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
+            }
+            return resp;
+        }
+        public async Task<ResponseDTO<List<RequestModel>>> MarkToBeProcessed(RequestModel request)
+        {
+            ResponseDTO<List<RequestModel>> resp = new ResponseDTO<List<RequestModel>>();
+            resp.Data = new List<RequestModel>();
+            try
+            {
+                string processor = Guid.NewGuid().ToString();
+                request.Status = (int)RequestStatusEnum.BeingProcessed;
+                request.ProcessorCode = processor;
+                _context.Update(request);
+                resp.Data.Add(request);
+                await _context.SaveChangesAsync();
+                resp.Success = true;
+                resp.Message = "List of requests marked to be processed (1)";
+            }
+            catch (Exception ex)
+            {
+                resp.Data = null;
+                resp.Message = "Error: " + ex.Message;
+                resp.Success = false;
             }
             return resp;
         }
@@ -180,18 +223,24 @@ namespace API_Payments.Services
             ResponseDTO<RequestModel> resp = new ResponseDTO<RequestModel>();
             try
             {
+                request.Card = Utilities.Utilities.OnlyNumbers(request.Card);
+                request.Card = EncryptionUtility.EncryptNew(request.Card);
+
                 _context.ChangeTracker.Clear();
                 _context.Update(request);
                 await _context.SaveChangesAsync();
+
+                request.Card = EncryptionUtility.DecryptNew(request.Card);
+
                 resp.Data = request;
                 resp.Message = "Request successfully updated";
-                resp.Status = true;
+                resp.Success = true;
             }
             catch (Exception ex)
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
         }

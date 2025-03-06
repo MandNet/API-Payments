@@ -18,7 +18,7 @@ namespace API_Payments.Services
             ResponseDTO<LogModel> resp = new ResponseDTO<LogModel>();
             try
             {
-                var log = await _context.TLogs.FirstOrDefaultAsync(logbd => logbd.Id == logId);
+                var log = await _context.TLog.FirstOrDefaultAsync(logbd => logbd.Id == logId);
                 if (log == null)
                 {
                     resp.Data = null;
@@ -27,13 +27,13 @@ namespace API_Payments.Services
                 }
 
                 resp.Data = log;
-                resp.Status = true;
+                resp.Success = true;
             }
             catch (Exception ex)
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
         }
@@ -47,17 +47,15 @@ namespace API_Payments.Services
                 await _context.AddAsync(log);
                 var ret = await _context.SaveChangesAsync();
 
-                log.Id = ret;
-
                 resp.Data = log;
                 resp.Message = "Log successfully inserted";
-                resp.Status = true;
+                resp.Success = true;
             }
             catch (Exception ex)
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
         }
@@ -70,19 +68,19 @@ namespace API_Payments.Services
                 List<LogModel> logs = new List<LogModel>();
                 if (num > 0)
                 {
-                    logs = (List<LogModel>)_context.TLogs.ToListAsync().Result
+                    logs = (List<LogModel>)_context.TLog.ToListAsync().Result
                                                                      .OrderByDescending(c => c.Id)
                                                                      .Take(num)
                                                                      .ToList();
                 }
                 else
                 {
-                    logs = (List<LogModel>)_context.TLogs.ToListAsync().Result
+                    logs = (List<LogModel>)_context.TLog.ToListAsync().Result
                                                                      .OrderByDescending(c => c.Id)
                                                                      .ToList();
                 }
 
-                resp.Status = true;
+                resp.Success = true;
                 resp.Data = logs;
                 if (num > 0)
                     resp.Message = "List of the last " + num.ToString() + " logs retrieved successfully (" + logs.Count.ToString() + ")";
@@ -93,7 +91,7 @@ namespace API_Payments.Services
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
         }

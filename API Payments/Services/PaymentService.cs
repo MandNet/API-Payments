@@ -2,6 +2,7 @@
 using API_Payments.DTO;
 using API_Payments.Enum;
 using API_Payments.Models;
+using API_Payments.Utilities;
 using Azure.Core;
 using Microsoft.Extensions.Options;
 using static System.Runtime.InteropServices.JavaScript.JSType;
@@ -34,20 +35,21 @@ namespace API_Payments.Services
             _mySettings = mySettings.Value;
         }
 
-        public async Task<ResponseDTO<TransactionModel>> Authorize(RequestModel request)
+        private async Task<ResponseDTO<TransactionModel>> Authorize(RequestModel request)
         {
             ResponseDTO<TransactionModel> resp = new ResponseDTO<TransactionModel>();
             resp.Data = new TransactionModel();
-            resp.Status = true;
+            resp.Success = true;
 
             try
             {
+//                request.Card = EncryptionUtility.DecryptNew(request.Card);
                 var card = await _cardService.GetByNumber(request.Card);
-                if (!card.Status)
+                if ((!card.Success) || (card.Data == null))
                 {
                     resp.Data = null;
                     resp.Message = "Card not found";
-                    resp.Status = false;
+                    resp.Success = false;
                     return resp;
                 }
 
@@ -55,7 +57,7 @@ namespace API_Payments.Services
                 {
                     resp.Data = null;
                     resp.Message = "Card not Authorized";
-                    resp.Status = false;
+                    resp.Success = false;
                     return resp;
                 }
 
@@ -63,7 +65,7 @@ namespace API_Payments.Services
                 {
                     resp.Data = null;
                     resp.Message = "Card not Elegible";
-                    resp.Status = false;
+                    resp.Success = false;
                     return resp;
                 }
 
@@ -71,22 +73,22 @@ namespace API_Payments.Services
                 {
                     resp.Data = null;
                     resp.Message = "Card not Active";
-                    resp.Status = false;
+                    resp.Success = false;
                     return resp;
                 }
 
                 var fee = await _feeService.GetLast();
-                if (!fee.Status)
+                if (!fee.Success)
                 {
                     fee = new ResponseDTO<FeeModel>();
                     fee.Data.Value = 0;
                 }
 
-                if ((card.Data.Balance + card.Data.Limit + fee.Data.Value) > request.Value)
+                if ((card.Data.Balance + card.Data.Limit) < (request.Value + fee.Data.Value))
                 {
                     resp.Data = null;
                     resp.Message = "Insuficient Balance";
-                    resp.Status = false;
+                    resp.Success = false;
                     return resp;
                 }
 
@@ -99,7 +101,7 @@ namespace API_Payments.Services
                         await _cardService.UpdateStatus(request.Card, (int)CardStatusEnum.Suspicious);
                         resp.Data = null;
                         resp.Message = "Fraud";
-                        resp.Status = false;
+                        resp.Success = false;
                         return resp;
                     }
                 }
@@ -111,13 +113,13 @@ namespace API_Payments.Services
                 resp.Data.Total = request.Value + fee.Data.Value;
                 resp.Data.Request_Id = request.Id;
                 resp.Data.AuthorizationCode = Guid.NewGuid().ToString();
-                resp.Status = true;
+                resp.Success = true;
             }
             catch (Exception ex)
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
             return resp;
         }
@@ -132,10 +134,10 @@ namespace API_Payments.Services
                 foreach (var request in requests)
                 {
                     var transaction = await Authorize(request);
-                    if (!transaction.Status)
+                    if ((!transaction.Success) || (transaction.Data == null))
                     {
                         request.Status = (int)RequestStatusEnum.Rejected;
-                        request.Motive = resp.Message;
+                        request.Motive = transaction.Message;
                         await _requestService.Update(request);
                     }
                     else
@@ -152,7 +154,7 @@ namespace API_Payments.Services
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
             }
 
             return resp;
@@ -166,11 +168,11 @@ namespace API_Payments.Services
             try
             {
                 var requests = await _requestService.MarkToBeProcessed();
-                if (!requests.Status)
+                if (!requests.Success)
                 {
                     resp.Data = null;
                     resp.Message = requests.Message;
-                    resp.Status = false;
+                    resp.Success = false;
                     return resp;
                 }
 
@@ -183,7 +185,82 @@ namespace API_Payments.Services
             {
                 resp.Data = null;
                 resp.Message = "Error: " + ex.Message;
-                resp.Status = false;
+                resp.Success = false;
+            }
+
+            return resp;
+        }
+
+        private async Task<ResponseDTO<List<RequestModel>>> Process(RequestModel request)
+        {
+            ResponseDTO<List<RequestModel>> resp = new ResponseDTO<List<RequestModel>>();
+            resp.Data = new List<RequestModel>();
+
+            try
+            {
+                var requests = await _requestService.MarkToBeProcessed(request);
+                if (!requests.Success)
+                {
+                    resp.Data = null;
+                    resp.Message = requests.Message;
+                    resp.Success = false;
+                    return resp;
+                }
+
+                resp.Data.Add(request);
+            }
+            catch (Exception ex)
+            {
+                resp.Data = null;
+                resp.Message = "Error: " + ex.Message;
+                resp.Success = false;
+            }
+
+            return resp;
+        }
+
+        public async Task<ResponseDTO<List<TransactionModel>>> ProcessPayment(RequestModel request)
+        {
+            ResponseDTO<List<TransactionModel>> resp = new ResponseDTO<List<TransactionModel>>();
+            resp.Data = new List<TransactionModel>();
+
+            try
+            {
+                _context.Database.BeginTransaction();
+
+                var req = _requestService.Insert(request).Result;
+
+                request = req.Data;
+
+                var requests = await Process(request);
+                if (!requests.Success)
+                {
+                    _context.Database.RollbackTransaction();
+                    resp.Data = null;
+                    resp.Message = requests.Message;
+                    resp.Success = false;
+                    return resp;
+                }
+                var transactions = await Execute(requests.Data);
+                if (!transactions.Success)
+                {
+                    _context.Database.RollbackTransaction();
+                    resp.Data = null;
+                    resp.Message = transactions.Message;
+                    resp.Success = false;
+                    return resp;
+                }
+
+                _context.Database.CommitTransaction();
+
+                resp = transactions;
+                resp.Success = true;
+            }
+            catch (Exception ex)
+            {
+                resp.Data = null;
+                resp.Message = "Error: " + ex.Message;
+                resp.Success = false;
             }
 
             return resp;

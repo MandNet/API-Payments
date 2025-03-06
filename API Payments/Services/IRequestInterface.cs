@@ -12,6 +12,7 @@ namespace API_Payments.Services
         Task<ResponseDTO<List<RequestModel>>> ListByProcessor(string Processor);
         Task<ResponseDTO<List<RequestModel>>> ListByStatus(int status);
         Task<ResponseDTO<List<RequestModel>>> MarkToBeProcessed();
+        Task<ResponseDTO<List<RequestModel>>> MarkToBeProcessed(RequestModel request);
     }
 }
 
